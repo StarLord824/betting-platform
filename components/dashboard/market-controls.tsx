@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Trophy, RotateCcw, Loader2, Power } from "lucide-react";
+import { Trophy, RotateCcw, Loader2, Power, Clock, Save } from "lucide-react";
 
 interface Market {
   id: string;
@@ -24,6 +24,19 @@ export function MarketControls({
   const [winningNumbers, setWinningNumbers] = useState<Record<string, string>>(
     {},
   );
+  const [editTimes, setEditTimes] = useState<
+    Record<string, { open: string; close: string }>
+  >(() => {
+    // Initialize with current market times so fields are always editable
+    const init: Record<string, { open: string; close: string }> = {};
+    initialMarkets.forEach((m) => {
+      init[m.id] = {
+        open: m.open_time.substring(0, 5),
+        close: m.close_time.substring(0, 5),
+      };
+    });
+    return init;
+  });
   const router = useRouter();
 
   const handleApiCall = async (marketId: string, body: any) => {
@@ -121,6 +134,47 @@ export function MarketControls({
     }
   };
 
+  const handleUpdateTimes = async (marketId: string) => {
+    const times = editTimes[marketId];
+    if (!times?.open || !times?.close) {
+      toast.error("Please set both open and close times");
+      return;
+    }
+
+    const result = await handleApiCall(marketId, {
+      id: marketId,
+      open_time: times.open,
+      close_time: times.close,
+      action: "update_times",
+    });
+
+    if (result) {
+      toast.success("Market times updated!");
+      setMarkets(
+        markets.map((m) =>
+          m.id === marketId
+            ? {
+                ...m,
+                open_time: times.open + ":00",
+                close_time: times.close + ":00",
+              }
+            : m,
+        ),
+      );
+      router.refresh();
+    }
+  };
+
+  const hasTimeChanged = (marketId: string) => {
+    const market = markets.find((m) => m.id === marketId);
+    const times = editTimes[marketId];
+    if (!market || !times) return false;
+    return (
+      market.open_time.substring(0, 5) !== times.open ||
+      market.close_time.substring(0, 5) !== times.close
+    );
+  };
+
   return (
     <div className="space-y-4">
       {markets.map((market) => (
@@ -134,24 +188,15 @@ export function MarketControls({
         >
           {/* Header row */}
           <div className="flex items-center justify-between">
-            <div>
-              <h3
-                className="text-sm font-bold text-white tracking-wider"
-                style={{
-                  fontFamily: "'Barlow', sans-serif",
-                  textTransform: "uppercase",
-                }}
-              >
-                {market.name}
-              </h3>
-              <p
-                className="text-xs mt-0.5"
-                style={{ color: "var(--mykd-text-dim)" }}
-              >
-                {market.open_time.substring(0, 5)} –{" "}
-                {market.close_time.substring(0, 5)}
-              </p>
-            </div>
+            <h3
+              className="text-sm font-bold text-white tracking-wider"
+              style={{
+                fontFamily: "'Barlow', sans-serif",
+                textTransform: "uppercase",
+              }}
+            >
+              {market.name}
+            </h3>
             <div className="flex items-center gap-2">
               <span
                 className="text-[10px] font-bold px-2 py-0.5 clip-notch-sm uppercase tracking-wider"
@@ -179,6 +224,118 @@ export function MarketControls({
               >
                 <Power className="w-3.5 h-3.5" />
               </button>
+            </div>
+          </div>
+
+          {/* Operating Hours — Always Visible & Editable */}
+          <div
+            className="p-3 clip-notch-sm space-y-2"
+            style={{
+              backgroundColor: "var(--mykd-surface)",
+              border: "1px solid var(--mykd-border)",
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <span
+                className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5"
+                style={{
+                  color: "#8B5CF6",
+                  fontFamily: "'Barlow', sans-serif",
+                }}
+              >
+                <Clock className="w-3 h-3" />
+                Operating Hours
+              </span>
+              {hasTimeChanged(market.id) && (
+                <button
+                  onClick={() => handleUpdateTimes(market.id)}
+                  disabled={isLoading === market.id}
+                  className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider clip-notch-sm disabled:opacity-50 flex items-center gap-1 transition-all"
+                  style={{
+                    backgroundColor: "rgba(139, 92, 246, 0.2)",
+                    border: "1px solid rgba(139, 92, 246, 0.4)",
+                    color: "#8B5CF6",
+                    fontFamily: "'Barlow', sans-serif",
+                  }}
+                >
+                  {isLoading === market.id ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <>
+                      <Save className="h-3 w-3" />
+                      Save
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <label
+                  className="block text-[9px] uppercase tracking-wider mb-1"
+                  style={{
+                    color: "var(--mykd-text-dim)",
+                    fontFamily: "'Barlow', sans-serif",
+                  }}
+                >
+                  Open
+                </label>
+                <input
+                  type="time"
+                  value={editTimes[market.id]?.open || ""}
+                  onChange={(e) =>
+                    setEditTimes((prev) => ({
+                      ...prev,
+                      [market.id]: {
+                        ...prev[market.id],
+                        open: e.target.value,
+                      },
+                    }))
+                  }
+                  className="w-full px-2 py-1.5 text-xs text-white font-mono outline-none clip-notch-sm focus:ring-1 focus:ring-purple-500/50 transition-all"
+                  style={{
+                    backgroundColor: "var(--mykd-surface-2)",
+                    border: "1px solid var(--mykd-border)",
+                    colorScheme: "dark",
+                  }}
+                />
+              </div>
+              <span
+                className="text-xs mt-4"
+                style={{ color: "var(--mykd-text-dim)" }}
+              >
+                to
+              </span>
+              <div className="flex-1">
+                <label
+                  className="block text-[9px] uppercase tracking-wider mb-1"
+                  style={{
+                    color: "var(--mykd-text-dim)",
+                    fontFamily: "'Barlow', sans-serif",
+                  }}
+                >
+                  Close
+                </label>
+                <input
+                  type="time"
+                  value={editTimes[market.id]?.close || ""}
+                  onChange={(e) =>
+                    setEditTimes((prev) => ({
+                      ...prev,
+                      [market.id]: {
+                        ...prev[market.id],
+                        close: e.target.value,
+                      },
+                    }))
+                  }
+                  className="w-full px-2 py-1.5 text-xs text-white font-mono outline-none clip-notch-sm focus:ring-1 focus:ring-purple-500/50 transition-all"
+                  style={{
+                    backgroundColor: "var(--mykd-surface-2)",
+                    border: "1px solid var(--mykd-border)",
+                    colorScheme: "dark",
+                  }}
+                />
+              </div>
             </div>
           </div>
 
