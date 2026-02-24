@@ -1,24 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import prisma from "@/lib/db";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
 import { MarketControls } from "@/components/dashboard/market-controls";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { format } from "date-fns";
+import { Activity, BarChart3, TrendingUp } from "lucide-react";
 
-export const revalidate = 0; // always fresh for admin
+export const revalidate = 0;
 
 export default async function AdminDashboard() {
   const supabase = await createClient();
@@ -28,7 +14,6 @@ export default async function AdminDashboard() {
     orderBy: { open_time: "asc" },
   });
 
-  // Convert Prisma Date objects for TIME columns back to "HH:mm:ss" strings for the UI
   const markets = marketsRaw.map((m) => ({
     ...m,
     is_active: m.is_active ?? false,
@@ -49,7 +34,6 @@ export default async function AdminDashboard() {
     },
   });
 
-  // Prisma handles types slightly differently, map to expected props
   const bets = betsRaw.map((b) => ({
     ...b,
     amount: Number(b.amount),
@@ -58,115 +42,261 @@ export default async function AdminDashboard() {
   const totalBetsAmount = bets?.reduce((sum, bet) => sum + bet.amount, 0) || 0;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8">
+      {/* Header Row */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">
-            Dashboard Overview
+          <h1
+            className="text-3xl md:text-4xl tracking-wider"
+            style={{
+              fontFamily: "'Barlow', sans-serif",
+              fontWeight: 800,
+              textTransform: "uppercase",
+            }}
+          >
+            <span style={{ color: "#8B5CF6" }}>DASHBOARD</span>{" "}
+            <span className="text-white">OVERVIEW</span>
           </h1>
-          <p className="text-neutral-400 mt-1">
-            Manage markets and monitor live activity.
+          <p
+            className="mt-1 text-sm"
+            style={{ color: "var(--mykd-text-muted)" }}
+          >
+            Manage markets and monitor live activity
           </p>
         </div>
-        <div className="bg-indigo-500/10 border border-indigo-500/20 px-4 py-2 rounded-xl">
-          <p className="text-sm font-medium text-indigo-400">
-            Total Volume Today
-          </p>
-          <p className="text-2xl font-bold text-white">
-            ₹{totalBetsAmount.toLocaleString()}
-          </p>
+
+        {/* Stats */}
+        <div className="flex gap-3">
+          <div
+            className="clip-notch-sm px-4 py-2.5"
+            style={{
+              backgroundColor: "var(--mykd-surface)",
+              border: "1px solid rgba(139, 92, 246, 0.2)",
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" style={{ color: "#8B5CF6" }} />
+              <span
+                className="text-xs uppercase tracking-wider"
+                style={{
+                  color: "var(--mykd-text-muted)",
+                  fontFamily: "'Barlow', sans-serif",
+                }}
+              >
+                Volume Today
+              </span>
+            </div>
+            <p
+              className="text-xl font-bold text-white mt-1"
+              style={{ fontFamily: "'Barlow', sans-serif" }}
+            >
+              ₹{totalBetsAmount.toLocaleString()}
+            </p>
+          </div>
+          <div
+            className="clip-notch-sm px-4 py-2.5"
+            style={{
+              backgroundColor: "var(--mykd-surface)",
+              border: "1px solid rgba(139, 92, 246, 0.2)",
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4" style={{ color: "#8B5CF6" }} />
+              <span
+                className="text-xs uppercase tracking-wider"
+                style={{
+                  color: "var(--mykd-text-muted)",
+                  fontFamily: "'Barlow', sans-serif",
+                }}
+              >
+                Total Bets
+              </span>
+            </div>
+            <p
+              className="text-xl font-bold text-white mt-1"
+              style={{ fontFamily: "'Barlow', sans-serif" }}
+            >
+              {bets?.length || 0}
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Left Column - Markets */}
-        <div className="lg:col-span-1 space-y-6">
-          <Card className="bg-neutral-900 border-neutral-800">
-            <CardHeader>
-              <CardTitle className="text-white">Market Controls</CardTitle>
-              <CardDescription>
+        <div className="lg:col-span-1">
+          <div
+            className="clip-notch overflow-hidden"
+            style={{
+              backgroundColor: "var(--mykd-surface)",
+              border: "1px solid var(--mykd-border)",
+            }}
+          >
+            {/* Top accent line */}
+            <div
+              className="h-[2px]"
+              style={{
+                background: "linear-gradient(90deg, #8B5CF6, transparent)",
+              }}
+            />
+            <div className="p-5">
+              <h2
+                className="text-lg font-bold text-white mb-1 tracking-wider"
+                style={{
+                  fontFamily: "'Barlow', sans-serif",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                }}
+              >
+                Market Controls
+              </h2>
+              <p
+                className="text-xs mb-4"
+                style={{ color: "var(--mykd-text-muted)" }}
+              >
                 Open/close markets and declare winners.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+              </p>
               <MarketControls initialMarkets={markets || []} />
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
 
         {/* Right Column - Live Feed */}
         <div className="lg:col-span-2">
-          <Card className="bg-neutral-900 border-neutral-800 overflow-hidden">
-            <CardHeader className="border-b border-neutral-800 bg-neutral-900/50">
-              <CardTitle className="text-white flex justify-between items-center">
-                <span>Live Feed (Today's Bets)</span>
-                <span className="text-sm font-normal text-neutral-400 bg-neutral-800 px-2.5 py-1 rounded-full">
-                  {bets?.length || 0} total bets
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="max-h-[600px] overflow-auto">
-                <Table>
-                  <TableHeader className="bg-neutral-950 sticky top-0 z-10">
-                    <TableRow className="border-neutral-800 hover:bg-neutral-950">
-                      <TableHead className="text-neutral-400">Time</TableHead>
-                      <TableHead className="text-neutral-400">User</TableHead>
-                      <TableHead className="text-neutral-400">Market</TableHead>
-                      <TableHead className="text-neutral-400">
-                        Game & Number
-                      </TableHead>
-                      <TableHead className="text-right text-neutral-400">
-                        Amount
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {!bets?.length ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={5}
-                          className="text-center py-8 text-neutral-500"
-                        >
-                          No bets placed today yet.
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      bets.map((bet: any) => (
-                        <TableRow
-                          key={bet.id}
-                          className="border-neutral-800 hover:bg-neutral-800/50"
-                        >
-                          <TableCell className="text-sm text-neutral-400 whitespace-nowrap">
-                            {format(new Date(bet.created_at), "HH:mm:ss")}
-                          </TableCell>
-                          <TableCell className="text-neutral-300 font-mono text-sm">
-                            {bet.profiles?.phone_number || "Unknown"}
-                          </TableCell>
-                          <TableCell className="text-neutral-300">
-                            {bet.markets?.name || "Unknown"}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-col">
-                              <span className="text-xs text-neutral-500 uppercase tracking-wider">
-                                {bet.game_type.replace("_", " ")}
-                              </span>
-                              <span className="font-bold text-emerald-400 tracking-widest">
-                                {bet.number}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right font-medium text-white">
-                            ₹{Number(bet.amount).toLocaleString()}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+          <div
+            className="clip-notch overflow-hidden"
+            style={{
+              backgroundColor: "var(--mykd-surface)",
+              border: "1px solid var(--mykd-border)",
+            }}
+          >
+            {/* Top accent line */}
+            <div
+              className="h-[2px]"
+              style={{
+                background: "linear-gradient(90deg, #8B5CF6, transparent)",
+              }}
+            />
+
+            {/* Header */}
+            <div
+              className="p-5 flex justify-between items-center"
+              style={{ borderBottom: "1px solid var(--mykd-border)" }}
+            >
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4" style={{ color: "#8B5CF6" }} />
+                <h2
+                  className="text-lg font-bold text-white tracking-wider"
+                  style={{
+                    fontFamily: "'Barlow', sans-serif",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Live Feed
+                </h2>
               </div>
-            </CardContent>
-          </Card>
+              <span
+                className="text-xs px-3 py-1 clip-notch-sm"
+                style={{
+                  backgroundColor: "var(--mykd-surface-2)",
+                  color: "var(--mykd-text-muted)",
+                  fontFamily: "'Barlow', sans-serif",
+                  fontWeight: 600,
+                }}
+              >
+                {bets?.length || 0} bets today
+              </span>
+            </div>
+
+            {/* Table */}
+            <div className="max-h-[600px] overflow-auto">
+              <table className="w-full">
+                <thead
+                  className="sticky top-0 z-10"
+                  style={{ backgroundColor: "var(--mykd-surface-2)" }}
+                >
+                  <tr>
+                    {["Time", "User", "Market", "Game & Number", "Amount"].map(
+                      (h, i) => (
+                        <th
+                          key={h}
+                          className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider ${i === 4 ? "text-right" : "text-left"}`}
+                          style={{
+                            color: "var(--mykd-text-dim)",
+                            fontFamily: "'Barlow', sans-serif",
+                          }}
+                        >
+                          {h}
+                        </th>
+                      ),
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {!bets?.length ? (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="text-center py-12 text-sm"
+                        style={{ color: "var(--mykd-text-dim)" }}
+                      >
+                        No bets placed today yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    bets.map((bet: any) => (
+                      <tr
+                        key={bet.id}
+                        className="transition-colors hover:bg-[#182029] border-b border-[#1F2935]"
+                      >
+                        <td
+                          className="px-4 py-3 text-sm whitespace-nowrap"
+                          style={{ color: "var(--mykd-text-muted)" }}
+                        >
+                          {format(new Date(bet.created_at), "HH:mm:ss")}
+                        </td>
+                        <td
+                          className="px-4 py-3 font-mono text-sm"
+                          style={{ color: "var(--mykd-text-muted)" }}
+                        >
+                          {bet.profiles?.phone_number || "Unknown"}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-white">
+                          {bet.markets?.name || "Unknown"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-col">
+                            <span
+                              className="text-[10px] uppercase tracking-wider"
+                              style={{
+                                color: "var(--mykd-text-dim)",
+                                fontFamily: "'Barlow', sans-serif",
+                              }}
+                            >
+                              {bet.game_type.replace("_", " ")}
+                            </span>
+                            <span
+                              className="font-mono font-bold tracking-widest"
+                              style={{ color: "#45F882" }}
+                            >
+                              {bet.number}
+                            </span>
+                          </div>
+                        </td>
+                        <td
+                          className="px-4 py-3 text-right font-bold text-white"
+                          style={{ fontFamily: "'Barlow', sans-serif" }}
+                        >
+                          ₹{Number(bet.amount).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div>

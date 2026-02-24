@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import prisma from "@/lib/db";
 import Link from "next/link";
-import { Clock, Play, AlertCircle } from "lucide-react";
+import { Clock, Play, Lock, Trophy } from "lucide-react";
 import { CountdownTimer } from "@/components/dashboard/countdown-timer";
 
 export const revalidate = 0;
@@ -48,7 +48,7 @@ export default async function DashboardPage() {
   if (!marketsRaw) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <p className="text-neutral-400">
+        <p style={{ color: "var(--mykd-text-muted)" }}>
           Failed to load markets. Please try again.
         </p>
       </div>
@@ -58,20 +58,32 @@ export default async function DashboardPage() {
   const markets = marketsRaw.map((m) => ({
     ...m,
     is_active: m.is_active ?? false,
-    open_time: m.open_time.toISOString().substring(11, 16), // Extracts HH:mm
+    open_time: m.open_time.toISOString().substring(11, 16),
     close_time: m.close_time.toISOString().substring(11, 16),
   }));
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-8 pb-20">
+      {/* Header */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-br from-white to-neutral-400 bg-clip-text text-transparent">
-          Live Markets
+        <h1
+          className="text-3xl md:text-4xl tracking-wider"
+          style={{
+            fontFamily: "'Barlow', sans-serif",
+            fontWeight: 800,
+            textTransform: "uppercase",
+          }}
+        >
+          <span style={{ color: "#45F882" }}>LIVE</span>{" "}
+          <span className="text-white">MARKETS</span>
         </h1>
-        <p className="text-neutral-400">Select a market to place your bets.</p>
+        <p className="text-sm" style={{ color: "var(--mykd-text-muted)" }}>
+          Select a market to place your bets
+        </p>
       </div>
 
-      <div className="grid gap-4">
+      {/* Market Grid */}
+      <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
         {markets.map((market: Market) => {
           const isOpen = isMarketOpen(
             market.open_time,
@@ -83,69 +95,132 @@ export default async function DashboardPage() {
             <Link
               key={market.id}
               href={isOpen ? `/market/${market.id}` : "#"}
-              className={`
-                relative p-5 rounded-2xl border transition-all overflow-hidden group
-                ${
-                  isOpen
-                    ? "bg-neutral-900 border-emerald-500/30 hover:border-emerald-500 hover:shadow-[0_0_30px_-5px_rgba(16,185,129,0.3)]"
-                    : "bg-neutral-900/50 border-neutral-800 opacity-75 cursor-not-allowed"
-                }
-              `}
+              className={`group relative block transition-all duration-300 ${
+                isOpen ? "cursor-pointer" : "cursor-not-allowed"
+              }`}
             >
-              {/* Glow effect for open markets */}
-              {isOpen && (
-                <>
-                  <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-                  <div className="absolute top-0 right-0 p-1">
-                    <span className="flex h-3 w-3 relative">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                    </span>
-                  </div>
-                </>
-              )}
+              {/* Card */}
+              <div
+                className={`clip-notch relative overflow-hidden p-5 md:p-6 transition-all duration-300 ${
+                  isOpen ? "neon-glow-sm group-hover:-translate-y-0.5" : ""
+                }`}
+                style={{
+                  backgroundColor: "var(--mykd-surface)",
+                  border: `1px solid ${isOpen ? "rgba(69, 248, 130, 0.3)" : "var(--mykd-border)"}`,
+                  opacity: isOpen ? 1 : 0.6,
+                }}
+              >
+                {/* Top accent line */}
+                {isOpen && (
+                  <div
+                    className="absolute top-0 left-0 right-[14px] h-[2px]"
+                    style={{
+                      background:
+                        "linear-gradient(90deg, #45F882, transparent)",
+                    }}
+                  />
+                )}
 
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3
-                    className={`text-xl font-bold ${isOpen ? "text-white" : "text-neutral-400"}`}
-                  >
-                    {market.name}
-                  </h3>
-                  <div className="flex items-center gap-1.5 mt-1.5 text-sm text-neutral-400">
-                    <Clock className="w-4 h-4" />
-                    <span>
-                      {formatTime(market.open_time)} –{" "}
-                      {formatTime(market.close_time)}
-                    </span>
+                {/* Decorative glow */}
+                {isOpen && (
+                  <div
+                    className="absolute -top-12 -right-12 w-32 h-32 rounded-full pointer-events-none"
+                    style={{
+                      backgroundColor: "rgba(69, 248, 130, 0.08)",
+                      filter: "blur(40px)",
+                    }}
+                  />
+                )}
+
+                <div className="flex justify-between items-start mb-4 relative">
+                  <div>
+                    <h3
+                      className="text-lg md:text-xl font-bold text-white mb-1"
+                      style={{
+                        fontFamily: "'Barlow', sans-serif",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {market.name}
+                    </h3>
+                    <div
+                      className="flex items-center gap-1.5 text-sm"
+                      style={{ color: "var(--mykd-text-muted)" }}
+                    >
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>
+                        {formatTime(market.open_time)} –{" "}
+                        {formatTime(market.close_time)}
+                      </span>
+                    </div>
                   </div>
+
+                  {/* Status Badge */}
+                  {isOpen ? (
+                    <div
+                      className="flex items-center gap-1.5 px-3 py-1.5 clip-notch-sm text-xs font-bold uppercase tracking-wider"
+                      style={{
+                        backgroundColor: "rgba(69, 248, 130, 0.15)",
+                        color: "#45F882",
+                        fontFamily: "'Barlow', sans-serif",
+                      }}
+                    >
+                      <span className="relative flex h-2 w-2">
+                        <span
+                          className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                          style={{ backgroundColor: "#45F882" }}
+                        />
+                        <span
+                          className="relative inline-flex rounded-full h-2 w-2"
+                          style={{ backgroundColor: "#45F882" }}
+                        />
+                      </span>
+                      <Play className="w-3 h-3 fill-current" />
+                      LIVE
+                    </div>
+                  ) : (
+                    <div
+                      className="flex items-center gap-1.5 px-3 py-1.5 clip-notch-sm text-xs font-bold uppercase tracking-wider"
+                      style={{
+                        backgroundColor: "var(--mykd-surface-2)",
+                        color: "var(--mykd-text-dim)",
+                        fontFamily: "'Barlow', sans-serif",
+                      }}
+                    >
+                      <Lock className="w-3 h-3" />
+                      CLOSED
+                    </div>
+                  )}
                 </div>
 
-                {isOpen ? (
-                  <div className="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                    <Play className="w-3 h-3 fill-current" />
-                    PLAY NOW
-                  </div>
-                ) : (
-                  <div className="bg-neutral-800 text-neutral-500 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    CLOSED
+                {/* Countdown Timer */}
+                {isOpen && <CountdownTimer closeTime={market.close_time} />}
+
+                {/* Result display */}
+                {!isOpen && market.today_winning_number && (
+                  <div
+                    className="flex items-center gap-2 mt-3 pt-3"
+                    style={{ borderTop: "1px solid var(--mykd-border)" }}
+                  >
+                    <Trophy
+                      className="w-3.5 h-3.5"
+                      style={{ color: "#FFB800" }}
+                    />
+                    <span
+                      className="text-xs uppercase tracking-wider"
+                      style={{ color: "var(--mykd-text-dim)" }}
+                    >
+                      Result:
+                    </span>
+                    <span
+                      className="font-mono font-bold tracking-widest text-sm"
+                      style={{ color: "#FFB800" }}
+                    >
+                      {market.today_winning_number}
+                    </span>
                   </div>
                 )}
               </div>
-
-              {/* Countdown Timer - only visible for open markets */}
-              {isOpen && <CountdownTimer closeTime={market.close_time} />}
-
-              {/* Show last winning number if market is closed and has a result */}
-              {!isOpen && market.today_winning_number && (
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-xs text-neutral-500">Result:</span>
-                  <span className="font-bold text-amber-400 tracking-widest text-sm">
-                    {market.today_winning_number}
-                  </span>
-                </div>
-              )}
             </Link>
           );
         })}

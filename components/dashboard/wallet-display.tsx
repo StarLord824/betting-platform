@@ -25,14 +25,21 @@ export function WalletDisplay({ initialBalance }: WalletDisplayProps) {
   }
 
   return (
-    <div className="relative flex items-center gap-2 bg-neutral-900 border border-neutral-800 px-3 py-1.5 rounded-full">
-      <Wallet className="h-4 w-4 text-emerald-400" />
+    <div
+      className="relative flex items-center gap-2 px-3 py-1.5 clip-notch-sm"
+      style={{
+        backgroundColor: "var(--mykd-surface-2)",
+        border: "1px solid rgba(255, 184, 0, 0.2)",
+      }}
+    >
+      <Wallet className="h-4 w-4" style={{ color: "#FFB800" }} />
       <motion.span
         key={balance}
-        initial={{ scale: 1.2, color: "#f87171" }}
-        animate={{ scale: 1, color: "#e5e5e5" }}
+        initial={{ scale: 1.15, color: "#ef4444" }}
+        animate={{ scale: 1, color: "#FFB800" }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="font-medium text-sm"
+        className="font-bold text-sm"
+        style={{ fontFamily: "'Barlow', sans-serif" }}
       >
         ₹{balance.toLocaleString()}
       </motion.span>
@@ -45,7 +52,8 @@ export function WalletDisplay({ initialBalance }: WalletDisplayProps) {
             animate={{ opacity: 0, y: -30 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1.5, ease: "easeOut" }}
-            className="absolute -top-2 right-0 text-xs font-bold text-red-400"
+            className="absolute -top-3 right-0 text-xs font-bold"
+            style={{ color: "#ef4444", fontFamily: "'Barlow', sans-serif" }}
           >
             -₹{deduction.toLocaleString()}
           </motion.span>

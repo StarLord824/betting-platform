@@ -3,20 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { sortPanna, validateGameInput } from "@/lib/game-logic";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Loader2, Coins } from "lucide-react";
+import { Loader2, Coins, Zap } from "lucide-react";
 
-// Smart autocomplete suggestions for given input
+// Smart autocomplete suggestions
 function getPannaSuggestions(input: string, gameType: string): string[] {
   if (
     !input ||
@@ -28,7 +18,6 @@ function getPannaSuggestions(input: string, gameType: string): string[] {
   const suggestions: string[] = [];
   const base = input;
 
-  // Find valid 3-digit combinations starting with the input
   for (let i = 0; i <= 9; i++) {
     for (let j = 0; j <= 9; j++) {
       const candidate =
@@ -39,9 +28,18 @@ function getPannaSuggestions(input: string, gameType: string): string[] {
     }
   }
 
-  // Return unique, sorted suggestions (max 5)
-  return Array.from(new Set(suggestions)).sort().slice(0, 5);
+  return Array.from(new Set(suggestions)).sort().slice(0, 8);
 }
+
+const GAME_TYPES = [
+  { value: "single_digit", label: "Single Digit", hint: "0-9" },
+  { value: "jodi", label: "Jodi", hint: "00-99" },
+  { value: "single_panna", label: "Single Panna", hint: "e.g. 123" },
+  { value: "double_panna", label: "Double Panna", hint: "e.g. 112" },
+  { value: "triple_panna", label: "Triple Panna", hint: "e.g. 777" },
+];
+
+const QUICK_AMOUNTS = [100, 500, 1000, 5000];
 
 interface BettingFormProps {
   marketId: string;
@@ -61,7 +59,6 @@ export function BettingForm({
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
-  // Update suggestions when number changes
   useEffect(() => {
     setSuggestions(getPannaSuggestions(number, gameType));
   }, [number, gameType]);
@@ -79,7 +76,6 @@ export function BettingForm({
 
     setIsLoading(true);
 
-    // Sort Panna if applicable
     const finalNumber = [
       "single_panna",
       "double_panna",
@@ -110,7 +106,6 @@ export function BettingForm({
       setNumber("");
       setAmount("");
 
-      // Trigger wallet animation
       if (
         typeof window !== "undefined" &&
         (window as any).__updateWalletBalance &&
@@ -123,7 +118,6 @@ export function BettingForm({
         onSuccess(data.bet.new_balance);
       }
 
-      // Refresh server components to get updated balance
       router.refresh();
     } catch (error: any) {
       toast.error(error.message);
@@ -134,70 +128,108 @@ export function BettingForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-4 bg-neutral-900 border border-neutral-800 p-4 sm:p-6 rounded-2xl relative overflow-hidden">
-        {/* Decorative background element */}
-        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Game Type Selector */}
+      <div
+        className="clip-notch p-5 md:p-6 space-y-5"
+        style={{
+          backgroundColor: "var(--mykd-surface)",
+          border: "1px solid var(--mykd-border)",
+        }}
+      >
+        {/* Top accent line */}
+        <div
+          className="absolute top-0 left-0 right-[14px] h-[2px]"
+          style={{ background: "linear-gradient(90deg, #45F882, transparent)" }}
+        />
 
-        <div className="space-y-2 relative">
-          <Label className="text-neutral-400">Game Type</Label>
-          <Select
-            value={gameType}
-            onValueChange={(val) => {
-              setGameType(val);
-              setNumber("");
+        <div>
+          <label
+            className="block text-xs font-semibold uppercase tracking-wider mb-3"
+            style={{
+              color: "var(--mykd-text-muted)",
+              fontFamily: "'Barlow', sans-serif",
             }}
           >
-            <SelectTrigger className="bg-neutral-950 border-neutral-800 text-white focus:ring-emerald-500">
-              <SelectValue placeholder="Select a game" />
-            </SelectTrigger>
-            <SelectContent className="bg-neutral-950 border-neutral-800 text-white">
-              <SelectItem value="single_digit">Single Digit (0-9)</SelectItem>
-              <SelectItem value="jodi">Jodi (00-99)</SelectItem>
-              <SelectItem value="single_panna">
-                Single Panna (e.g. 123)
-              </SelectItem>
-              <SelectItem value="double_panna">
-                Double Panna (e.g. 112)
-              </SelectItem>
-              <SelectItem value="triple_panna">
-                Triple Panna (e.g. 777)
-              </SelectItem>
-            </SelectContent>
-          </Select>
+            Game Type
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+            {GAME_TYPES.map((gt) => (
+              <button
+                key={gt.value}
+                type="button"
+                onClick={() => {
+                  setGameType(gt.value);
+                  setNumber("");
+                }}
+                className="py-2.5 px-3 text-center transition-all clip-notch-sm text-xs font-semibold uppercase tracking-wider"
+                style={{
+                  backgroundColor:
+                    gameType === gt.value
+                      ? "rgba(69, 248, 130, 0.15)"
+                      : "var(--mykd-surface-2)",
+                  border: `1px solid ${gameType === gt.value ? "rgba(69, 248, 130, 0.4)" : "var(--mykd-border)"}`,
+                  color:
+                    gameType === gt.value
+                      ? "#45F882"
+                      : "var(--mykd-text-muted)",
+                  fontFamily: "'Barlow', sans-serif",
+                }}
+              >
+                <div>{gt.label}</div>
+                <div className="text-[10px] mt-0.5 opacity-60">{gt.hint}</div>
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="space-y-2 relative">
-          <Label className="text-neutral-400">Number</Label>
-          <div className="relative">
-            <Input
-              type="text"
-              inputMode="numeric"
-              placeholder={
-                gameType.includes("panna")
-                  ? "Enter 3 digits"
-                  : gameType === "jodi"
-                    ? "Enter 2 digits"
-                    : "Enter 1 digit"
-              }
-              value={number}
-              onChange={(e) => setNumber(e.target.value.replace(/\D/g, ""))} // numbers only
-              maxLength={
-                gameType.includes("panna") ? 3 : gameType === "jodi" ? 2 : 1
-              }
-              className="bg-neutral-950 border-neutral-800 text-white text-lg font-mono focus-visible:ring-emerald-500"
-              disabled={isLoading}
-            />
-          </div>
+        {/* Number Input */}
+        <div>
+          <label
+            className="block text-xs font-semibold uppercase tracking-wider mb-2"
+            style={{
+              color: "var(--mykd-text-muted)",
+              fontFamily: "'Barlow', sans-serif",
+            }}
+          >
+            Your Number
+          </label>
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder={
+              gameType.includes("panna")
+                ? "Enter 3 digits"
+                : gameType === "jodi"
+                  ? "Enter 2 digits"
+                  : "Enter 1 digit"
+            }
+            value={number}
+            onChange={(e) => setNumber(e.target.value.replace(/\D/g, ""))}
+            maxLength={
+              gameType.includes("panna") ? 3 : gameType === "jodi" ? 2 : 1
+            }
+            className="w-full px-4 py-3 text-xl font-mono text-white tracking-widest placeholder:text-gray-600 outline-none focus:ring-2 transition-all clip-notch-sm"
+            style={{
+              backgroundColor: "var(--mykd-surface-2)",
+              border: "1px solid var(--mykd-border)",
+            }}
+            disabled={isLoading}
+          />
 
-          {/* Smart Autocomplete Suggestions */}
+          {/* Smart Autocomplete */}
           {suggestions.length > 0 && number.length < 3 && (
-            <div className="flex flex-wrap gap-2 mt-2">
+            <div className="flex flex-wrap gap-2 mt-3">
               {suggestions.map((sug) => (
                 <button
                   key={sug}
                   type="button"
                   onClick={() => setNumber(sug)}
-                  className="px-3 py-1 bg-neutral-800 text-emerald-400 border border-emerald-500/30 text-sm font-mono rounded-md hover:bg-neutral-700 transition-colors"
+                  className="px-3 py-1.5 font-mono text-sm font-bold tracking-wider transition-all clip-notch-sm btn-lift"
+                  style={{
+                    backgroundColor: "rgba(69, 248, 130, 0.1)",
+                    border: "1px solid rgba(69, 248, 130, 0.3)",
+                    color: "#45F882",
+                  }}
                 >
                   {sug}
                 </button>
@@ -206,35 +238,86 @@ export function BettingForm({
           )}
         </div>
 
-        <div className="space-y-2 relative">
-          <Label className="text-neutral-400">Bet Amount (₹)</Label>
+        {/* Amount */}
+        <div>
+          <label
+            className="block text-xs font-semibold uppercase tracking-wider mb-2"
+            style={{
+              color: "var(--mykd-text-muted)",
+              fontFamily: "'Barlow', sans-serif",
+            }}
+          >
+            Bet Amount (₹)
+          </label>
           <div className="relative">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500">
-              <Coins className="w-4 h-4" />
+            <div className="absolute left-4 top-1/2 -translate-y-1/2">
+              <Coins className="w-4 h-4" style={{ color: "#FFB800" }} />
             </div>
-            <Input
+            <input
               type="number"
               placeholder="100"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="bg-neutral-950 border-neutral-800 text-white pl-9 text-lg focus-visible:ring-emerald-500"
+              className="w-full pl-10 pr-4 py-3 text-lg text-white font-semibold placeholder:text-gray-600 outline-none focus:ring-2 transition-all clip-notch-sm"
+              style={{
+                backgroundColor: "var(--mykd-surface-2)",
+                border: "1px solid var(--mykd-border)",
+              }}
               disabled={isLoading}
             />
+          </div>
+
+          {/* Quick amount buttons */}
+          <div className="flex flex-wrap gap-2 mt-3">
+            {QUICK_AMOUNTS.map((qa) => (
+              <button
+                key={qa}
+                type="button"
+                onClick={() => setAmount(qa.toString())}
+                className="px-3 py-1.5 text-xs font-bold tracking-wider transition-all clip-notch-sm"
+                style={{
+                  backgroundColor:
+                    amount === qa.toString()
+                      ? "rgba(255, 184, 0, 0.15)"
+                      : "var(--mykd-surface-2)",
+                  border: `1px solid ${amount === qa.toString() ? "rgba(255, 184, 0, 0.4)" : "var(--mykd-border)"}`,
+                  color:
+                    amount === qa.toString()
+                      ? "#FFB800"
+                      : "var(--mykd-text-dim)",
+                  fontFamily: "'Barlow', sans-serif",
+                }}
+              >
+                ₹{qa.toLocaleString()}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
-      <Button
+      {/* Place Bet Button */}
+      <button
         type="submit"
-        className="w-full h-14 text-lg font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_20px_-5px_rgba(16,185,129,0.5)] hover:shadow-[0_0_30px_-5px_rgba(16,185,129,0.6)] transition-all"
+        className="w-full py-4 text-base font-bold uppercase tracking-wider clip-notch btn-lift flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        style={{
+          backgroundColor: "#45F882",
+          color: "#0F161B",
+          fontFamily: "'Barlow', sans-serif",
+          fontWeight: 800,
+          boxShadow:
+            "0 0 25px rgba(69, 248, 130, 0.3), 0 0 50px rgba(69, 248, 130, 0.1)",
+        }}
         disabled={isLoading || !number || !amount}
       >
         {isLoading ? (
-          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+          <Loader2 className="h-5 w-5 animate-spin" />
         ) : (
-          "PLACE BET"
+          <>
+            <Zap className="h-5 w-5" />
+            Place Bet
+          </>
         )}
-      </Button>
+      </button>
     </form>
   );
 }

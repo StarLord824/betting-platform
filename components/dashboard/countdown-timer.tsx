@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 
 interface CountdownTimerProps {
-  closeTime: string; // "HH:MM:SS" format
+  closeTime: string; // "HH:MM" or "HH:MM:SS" format
 }
 
 export function CountdownTimer({ closeTime }: CountdownTimerProps) {
@@ -40,21 +40,62 @@ export function CountdownTimer({ closeTime }: CountdownTimerProps) {
 
   if (!timeLeft || timeLeft === "00:00:00") return null;
 
+  const segments = timeLeft.split(":");
+  const labels = ["HRS", "MIN", "SEC"];
+
   return (
-    <div className="flex items-center gap-1.5 mt-2">
-      <div className="flex items-center gap-0.5 font-mono text-sm">
-        {timeLeft.split(":").map((segment, i) => (
-          <span key={i} className="flex items-center">
-            <span className="bg-neutral-800 text-emerald-400 px-1.5 py-0.5 rounded text-xs font-bold tracking-wider">
-              {segment}
+    <div
+      className="flex items-center gap-2 mt-3 pt-3"
+      style={{ borderTop: "1px solid var(--mykd-border)" }}
+    >
+      <span
+        className="text-xs uppercase tracking-wider mr-1"
+        style={{
+          color: "var(--mykd-text-dim)",
+          fontFamily: "'Barlow', sans-serif",
+          fontWeight: 600,
+        }}
+      >
+        Ends in
+      </span>
+      <div className="flex items-center gap-1">
+        {segments.map((segment, i) => (
+          <div key={i} className="flex items-center gap-1">
+            <div
+              className="px-2 py-1 text-center clip-notch-sm"
+              style={{
+                backgroundColor: "var(--mykd-surface-2)",
+                border: "1px solid rgba(69, 248, 130, 0.2)",
+                minWidth: "36px",
+              }}
+            >
+              <span
+                className="font-mono font-bold text-sm"
+                style={{ color: "#45F882" }}
+              >
+                {segment}
+              </span>
+            </div>
+            <span
+              className="text-[9px] uppercase"
+              style={{
+                color: "var(--mykd-text-dim)",
+                fontFamily: "'Barlow', sans-serif",
+              }}
+            >
+              {labels[i]}
             </span>
             {i < 2 && (
-              <span className="text-neutral-600 mx-0.5 text-xs">:</span>
+              <span
+                className="mx-0.5 text-xs"
+                style={{ color: "var(--mykd-text-dim)" }}
+              >
+                :
+              </span>
             )}
-          </span>
+          </div>
         ))}
       </div>
-      <span className="text-neutral-500 text-xs ml-1">left</span>
     </div>
   );
 }

@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Barlow } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const barlow = Barlow({
+  subsets: ["latin"],
+  weight: ["600", "700", "800", "900"],
+  variable: "--font-barlow",
+});
 
 export const metadata: Metadata = {
   title: "BetPlay - Premium Betting Experience",
@@ -18,7 +23,8 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${inter.className} bg-neutral-950 text-neutral-50 antialiased`}
+        className={`${inter.variable} ${barlow.variable} font-sans antialiased`}
+        style={{ backgroundColor: "#0F161B", color: "#FFFFFF" }}
       >
         {children}
         <Toaster theme="dark" richColors position="top-center" />

@@ -29,25 +29,55 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-50 flex flex-col">
-      <header className="sticky top-0 z-50 w-full border-b border-indigo-900/50 bg-neutral-950/80 backdrop-blur">
-        <div className="container flex h-16 items-center justify-between px-4 lg:px-8 max-w-7xl mx-auto">
-          <Link
-            href="/admin"
-            className="flex items-center gap-2 text-indigo-400"
-          >
-            <ShieldCheck className="h-6 w-6" />
-            <span className="font-bold text-xl tracking-tight">
-              Admin Console
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: "var(--mykd-bg)", color: "var(--mykd-text)" }}
+    >
+      <header
+        className="sticky top-0 z-50 w-full"
+        style={{
+          backgroundColor: "rgba(15, 22, 27, 0.9)",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid rgba(139, 92, 246, 0.2)",
+        }}
+      >
+        <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 lg:px-8">
+          <Link href="/admin" className="flex items-center gap-2.5">
+            <div
+              className="w-8 h-8 flex items-center justify-center clip-notch-sm"
+              style={{ backgroundColor: "#8B5CF6" }}
+            >
+              <ShieldCheck className="w-4 h-4 text-white" />
+            </div>
+            <span
+              className="text-lg tracking-wider"
+              style={{
+                fontFamily: "'Barlow', sans-serif",
+                fontWeight: 800,
+                textTransform: "uppercase",
+              }}
+            >
+              <span style={{ color: "#8B5CF6" }}>ADMIN</span>{" "}
+              <span className="text-white">CONSOLE</span>
             </span>
           </Link>
 
           <div className="flex items-center gap-4">
-            <span className="text-sm text-neutral-400 hidden sm:inline-block bg-neutral-900 px-3 py-1 rounded-full border border-neutral-800">
+            <span
+              className="text-sm hidden sm:inline-block px-3 py-1 clip-notch-sm"
+              style={{
+                color: "var(--mykd-text-muted)",
+                backgroundColor: "var(--mykd-surface)",
+                border: "1px solid var(--mykd-border)",
+              }}
+            >
               {user.phone || user.email}
             </span>
             <form action="/auth/signout" method="post">
-              <button className="text-neutral-400 hover:text-white p-2 transition-colors">
+              <button
+                className="p-2 transition-colors"
+                style={{ color: "var(--mykd-text-dim)" }}
+              >
                 <LogOut className="h-5 w-5" />
               </button>
             </form>
@@ -55,7 +85,7 @@ export default async function AdminLayout({
         </div>
       </header>
 
-      <main className="flex-1 container max-w-7xl mx-auto p-4 lg:p-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-8">
         {children}
       </main>
     </div>

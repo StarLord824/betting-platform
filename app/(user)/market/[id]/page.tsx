@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import { BettingForm } from "@/components/betting/betting-form";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Zap } from "lucide-react";
 import prisma from "@/lib/db";
 
 export const revalidate = 0;
@@ -51,7 +51,6 @@ export default async function MarketPage({
   );
 
   if (!isOpen) {
-    // Prevent entry to closed markets entirely
     redirect("/");
   }
 
@@ -69,24 +68,46 @@ export default async function MarketPage({
   });
 
   return (
-    <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-2xl mx-auto space-y-6 pb-20">
+      {/* Header */}
       <div className="flex items-center gap-4">
         <Link
           href="/"
-          className="p-2 rounded-full hover:bg-neutral-800 text-neutral-400 transition-colors"
+          className="p-2 transition-colors clip-notch-sm"
+          style={{
+            backgroundColor: "var(--mykd-surface)",
+            border: "1px solid var(--mykd-border)",
+            color: "var(--mykd-text-muted)",
+          }}
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">
+          <h1
+            className="text-2xl md:text-3xl font-bold text-white tracking-wider"
+            style={{
+              fontFamily: "'Barlow', sans-serif",
+              fontWeight: 800,
+              textTransform: "uppercase",
+            }}
+          >
             {market.name}
           </h1>
           <div className="flex items-center gap-2 mt-1">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            <span className="relative flex h-2 w-2">
+              <span
+                className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                style={{ backgroundColor: "#45F882" }}
+              />
+              <span
+                className="relative inline-flex rounded-full h-2 w-2"
+                style={{ backgroundColor: "#45F882" }}
+              />
             </span>
-            <span className="text-sm font-medium text-emerald-400">
+            <span
+              className="text-sm font-semibold uppercase tracking-wider"
+              style={{ color: "#45F882", fontFamily: "'Barlow', sans-serif" }}
+            >
               Market Open
             </span>
           </div>

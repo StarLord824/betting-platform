@@ -4,6 +4,8 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ── MYKD Neon-Cyber Design System ── */
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -80,6 +82,17 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* MYKD Custom Properties */
+  --mykd-bg: #0f161b;
+  --mykd-surface: #10181f;
+  --mykd-surface-2: #182029;
+  --mykd-border: #1f2935;
+  --mykd-accent: #45f882;
+  --mykd-accent-amber: #ffb800;
+  --mykd-text: #ffffff;
+  --mykd-text-muted: #adb0bc;
+  --mykd-text-dim: #6b7280;
 }
 
 .dark {
@@ -123,4 +136,116 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* ── MYKD Utility Classes ── */
+
+/* Neon glow effects */
+.neon-glow {
+  box-shadow:
+    0 0 15px rgba(69, 248, 130, 0.3),
+    0 0 30px rgba(69, 248, 130, 0.1);
+}
+.neon-glow-sm {
+  box-shadow: 0 0 8px rgba(69, 248, 130, 0.25);
+}
+.neon-glow-amber {
+  box-shadow:
+    0 0 15px rgba(255, 184, 0, 0.3),
+    0 0 30px rgba(255, 184, 0, 0.1);
+}
+.neon-glow-purple {
+  box-shadow:
+    0 0 15px rgba(139, 92, 246, 0.3),
+    0 0 30px rgba(139, 92, 246, 0.1);
+}
+
+/* Notched corner clip-paths */
+.clip-notch {
+  clip-path: polygon(
+    0 0,
+    calc(100% - 14px) 0,
+    100% 14px,
+    100% 100%,
+    14px 100%,
+    0 calc(100% - 14px)
+  );
+}
+.clip-notch-sm {
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
+}
+.clip-notch-tr {
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
+}
+.clip-notch-bl {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+}
+
+/* Glass card effect */
+.glass-card {
+  background: rgba(16, 24, 31, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--mykd-border);
+}
+
+/* Heading font */
+.font-heading {
+  font-family: "Barlow", sans-serif;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Grid background pattern */
+.bg-grid-pattern {
+  background-image:
+    linear-gradient(rgba(69, 248, 130, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(69, 248, 130, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--mykd-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--mykd-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--mykd-accent);
+}
+
+/* Pulsing live dot */
+@keyframes pulse-neon {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(69, 248, 130, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(69, 248, 130, 0);
+  }
+}
+.pulse-neon {
+  animation: pulse-neon 2s ease-in-out infinite;
+}
+
+/* Button hover lift */
+.btn-lift {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.btn-lift:hover {
+  transform: translateY(-2px);
 }
