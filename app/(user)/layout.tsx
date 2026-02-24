@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Gamepad2, LogOut } from "lucide-react";
 import Link from "next/link";
 import { WalletDisplay } from "@/components/dashboard/wallet-display";
+import prisma from "@/lib/db";
 
 export default async function UserLayout({
   children,
@@ -19,11 +20,10 @@ export default async function UserLayout({
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("balance, role")
-    .eq("id", user.id)
-    .single();
+  const profile = await prisma.profiles.findUnique({
+    where: { id: user.id },
+    select: { balance: true, role: true },
+  });
 
   if (profile?.role === "admin") {
     redirect("/admin");
@@ -42,7 +42,11 @@ export default async function UserLayout({
           </Link>
 
           <div className="flex items-center gap-4">
-            <WalletDisplay initialBalance={profile?.balance ?? 50000} />
+            <WalletDisplay
+              initialBalance={
+                profile?.balance ? Number(profile.balance) : 50000
+              }
+            />
 
             <form action="/auth/signout" method="post">
               <button className="text-neutral-400 hover:text-white p-2 transition-colors">

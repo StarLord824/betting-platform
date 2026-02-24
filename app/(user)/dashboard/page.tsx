@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import prisma from "@/lib/db";
 import Link from "next/link";
 import { Clock, Play, AlertCircle } from "lucide-react";
 import { CountdownTimer } from "@/components/dashboard/countdown-timer";
@@ -40,12 +41,11 @@ function formatTime(timeString: string) {
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  const { data: markets, error } = await supabase
-    .from("markets")
-    .select("*")
-    .order("open_time", { ascending: true });
+  const marketsRaw = await prisma.markets.findMany({
+    orderBy: { open_time: "asc" },
+  });
 
-  if (error || !markets) {
+  if (!marketsRaw) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <p className="text-neutral-400">
@@ -54,6 +54,13 @@ export default async function DashboardPage() {
       </div>
     );
   }
+
+  const markets = marketsRaw.map((m) => ({
+    ...m,
+    is_active: m.is_active ?? false,
+    open_time: m.open_time.toISOString().substring(11, 16), // Extracts HH:mm
+    close_time: m.close_time.toISOString().substring(11, 16),
+  }));
 
   return (
     <div className="space-y-6 pb-20">

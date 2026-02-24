@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import prisma from "@/lib/db";
 
 export async function POST(request: Request) {
   try {
@@ -26,40 +27,69 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
     }
 
-    // Call the postgres function to handle the transaction atomically
-    const { data, error } = await supabase.rpc("place_bet", {
-      p_user_id: user.id,
-      p_market_id: marketId,
-      p_game_type: gameType,
-      p_number: number,
-      p_amount: amount,
-    });
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        const market = await tx.markets.findUnique({
+          where: { id: marketId },
+        });
 
-    if (error) {
+        if (!market) {
+          throw new Error("Market not found");
+        }
+
+        if (!market.is_active) {
+          throw new Error("Market is closed for betting");
+        }
+
+        const profile = await tx.profiles.update({
+          where: { id: user.id },
+          data: {
+            balance: {
+              decrement: amount,
+            },
+          },
+        });
+
+        if (Number(profile.balance) < 0) {
+          throw new Error("Insufficient wallet balance");
+        }
+
+        const bet = await tx.bets.create({
+          data: {
+            user_id: user.id,
+            market_id: marketId,
+            game_type: gameType,
+            number: number,
+            amount: amount,
+            status: "pending",
+          },
+        });
+
+        return {
+          bet_id: bet.id,
+          new_balance: Number(profile.balance),
+        };
+      });
+
+      return NextResponse.json({
+        success: true,
+        bet: result,
+      });
+    } catch (error: any) {
       console.error("Bet placement error:", error);
-      // Customize error message for better UX
-      if (error.message.includes("Insufficient balance")) {
-        return NextResponse.json(
-          { error: "Insufficient wallet balance" },
-          { status: 400 },
-        );
+
+      if (
+        error.message.includes("Insufficient wallet balance") ||
+        error.message.includes("Market is closed for betting")
+      ) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
       }
-      if (error.message.includes("Market is inactive")) {
-        return NextResponse.json(
-          { error: "Market is closed for betting" },
-          { status: 400 },
-        );
-      }
+
       return NextResponse.json(
         { error: "Failed to place bet. Please try again." },
         { status: 500 },
       );
     }
-
-    return NextResponse.json({
-      success: true,
-      bet: data,
-    });
   } catch (error: any) {
     console.error("API error:", error);
     return NextResponse.json(

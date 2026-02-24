@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import prisma from "@/lib/db";
 import {
   Card,
   CardContent,
@@ -23,34 +24,38 @@ export default async function AdminDashboard() {
   const supabase = await createClient();
 
   // Fetch Markets
-  const { data: markets } = await supabase
-    .from("markets")
-    .select("*")
-    .order("open_time");
+  const marketsRaw = await prisma.markets.findMany({
+    orderBy: { open_time: "asc" },
+  });
+
+  // Convert Prisma Date objects for TIME columns back to "HH:mm:ss" strings for the UI
+  const markets = marketsRaw.map((m) => ({
+    ...m,
+    is_active: m.is_active ?? false,
+    open_time: m.open_time.toISOString().substring(11, 19),
+    close_time: m.close_time.toISOString().substring(11, 19),
+  }));
 
   // Fetch Today's Bets
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const { data: bets } = await supabase
-    .from("bets")
-    .select(
-      `
-      id,
-      game_type,
-      number,
-      amount,
-      status,
-      created_at,
-      profiles ( phone_number ),
-      markets ( name )
-    `,
-    )
-    .gte("created_at", today.toISOString())
-    .order("created_at", { ascending: false });
+  const betsRaw = await prisma.bets.findMany({
+    where: { created_at: { gte: today } },
+    orderBy: { created_at: "desc" },
+    include: {
+      profiles: { select: { phone_number: true } },
+      markets: { select: { name: true } },
+    },
+  });
 
-  const totalBetsAmount =
-    bets?.reduce((sum, bet) => sum + Number(bet.amount), 0) || 0;
+  // Prisma handles types slightly differently, map to expected props
+  const bets = betsRaw.map((b) => ({
+    ...b,
+    amount: Number(b.amount),
+  }));
+
+  const totalBetsAmount = bets?.reduce((sum, bet) => sum + bet.amount, 0) || 0;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">

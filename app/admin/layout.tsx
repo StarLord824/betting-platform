@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ShieldCheck, LogOut } from "lucide-react";
 import Link from "next/link";
+import prisma from "@/lib/db";
 
 export default async function AdminLayout({
   children,
@@ -18,11 +19,10 @@ export default async function AdminLayout({
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const profile = await prisma.profiles.findUnique({
+    where: { id: user.id },
+    select: { role: true },
+  });
 
   if (profile?.role !== "admin") {
     redirect("/");

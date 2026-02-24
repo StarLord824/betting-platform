@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import prisma from "@/lib/db";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -12,11 +13,10 @@ export default async function Home() {
   }
 
   // Check if user is admin
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const profile = await prisma.profiles.findUnique({
+    where: { id: user.id },
+    select: { role: true },
+  });
 
   if (profile?.role === "admin") {
     redirect("/admin");

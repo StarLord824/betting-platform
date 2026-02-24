@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { BettingForm } from "@/components/betting/betting-form";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import prisma from "@/lib/db";
 
 export const revalidate = 0;
 
@@ -28,15 +29,20 @@ export default async function MarketPage({
 }) {
   const supabase = await createClient();
 
-  const { data: market } = await supabase
-    .from("markets")
-    .select("*")
-    .eq("id", params.id)
-    .single();
+  const marketRaw = await prisma.markets.findUnique({
+    where: { id: params.id },
+  });
 
-  if (!market) {
+  if (!marketRaw) {
     notFound();
   }
+
+  const market = {
+    ...marketRaw,
+    is_active: marketRaw.is_active ?? false,
+    open_time: marketRaw.open_time.toISOString().substring(11, 19),
+    close_time: marketRaw.close_time.toISOString().substring(11, 19),
+  };
 
   const isOpen = isMarketOpen(
     market.open_time,
@@ -53,11 +59,14 @@ export default async function MarketPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("balance")
-    .eq("id", user?.id)
-    .single();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const profile = await prisma.profiles.findUnique({
+    where: { id: user.id },
+    select: { balance: true },
+  });
 
   return (
     <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">

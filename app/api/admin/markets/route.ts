@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import prisma from "@/lib/db";
 
 export async function PATCH(request: Request) {
   try {
@@ -12,11 +13,10 @@ export async function PATCH(request: Request) {
     if (!user)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    const profile = await prisma.profiles.findUnique({
+      where: { id: user.id },
+      select: { role: true },
+    });
 
     if (profile?.role !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -35,15 +35,12 @@ export async function PATCH(request: Request) {
 
     // 3. Handle Actions
     if (action === "toggle_status") {
-      const { data, error } = await supabase
-        .from("markets")
-        .update({ is_active })
-        .eq("id", id)
-        .select()
-        .single();
+      const market = await prisma.markets.update({
+        where: { id },
+        data: { is_active },
+      });
 
-      if (error) throw error;
-      return NextResponse.json({ success: true, market: data });
+      return NextResponse.json({ success: true, market });
     }
 
     if (action === "declare_result") {
@@ -54,75 +51,81 @@ export async function PATCH(request: Request) {
         );
       }
 
-      // 1. Update the market with the winning number and deactivate it
-      const { data: market, error: marketError } = await supabase
-        .from("markets")
-        .update({
-          today_winning_number: winning_number,
-          is_active: false,
-        })
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (marketError) throw marketError;
-
-      // 2. Mark all today's pending bets for this market as 'lost' by default
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const { error: lostError } = await supabase
-        .from("bets")
-        .update({ status: "lost" })
-        .eq("market_id", id)
-        .eq("status", "pending")
-        .gte("created_at", today.toISOString());
+      // Use a transaction for atomic result declaration
+      const market = await prisma.$transaction(async (tx) => {
+        // 1. Update the market with the winning number and deactivate it
+        const updatedMarket = await tx.markets.update({
+          where: { id },
+          data: {
+            today_winning_number: winning_number,
+            is_active: false,
+          },
+        });
 
-      if (lostError) console.error("Failed to mark losing bets:", lostError);
+        // 2. Mark all today's pending bets for this market as 'lost' by default
+        await tx.bets.updateMany({
+          where: {
+            market_id: id,
+            status: "pending",
+            created_at: { gte: today },
+          },
+          data: { status: "lost" },
+        });
 
-      // 3. Mark matching bets as 'won'
-      // For single_digit bets, the winning number's last digit matches
-      // For other types, exact number match
-      const { error: wonError } = await supabase
-        .from("bets")
-        .update({ status: "won" })
-        .eq("market_id", id)
-        .eq("number", winning_number)
-        .eq("status", "lost")
-        .gte("created_at", today.toISOString());
+        // 3. Mark matching bets as 'won'
+        await tx.bets.updateMany({
+          where: {
+            market_id: id,
+            status: "lost", // They were just marked lost above
+            number: winning_number,
+            created_at: { gte: today },
+          },
+          data: { status: "won" },
+        });
 
-      if (wonError) console.error("Failed to mark winning bets:", wonError);
+        return updatedMarket;
+      });
 
       return NextResponse.json({ success: true, market });
     }
 
     if (action === "update_times") {
       const updateData: any = {};
-      if (open_time) updateData.open_time = open_time;
-      if (close_time) updateData.close_time = close_time;
 
-      const { data, error } = await supabase
-        .from("markets")
-        .update(updateData)
-        .eq("id", id)
-        .select()
-        .single();
+      // Prisma DateTime objects need ISO strings, but if the client sends "HH:mm" we can
+      // construct a full date object that sets the time portion for Postgres TIME columns
+      if (open_time) {
+        const [h, m] = open_time.split(":");
+        const d = new Date();
+        d.setUTCHours(parseInt(h), parseInt(m), 0, 0);
+        updateData.open_time = d;
+      }
+      if (close_time) {
+        const [h, m] = close_time.split(":");
+        const d = new Date();
+        d.setUTCHours(parseInt(h), parseInt(m), 0, 0);
+        updateData.close_time = d;
+      }
 
-      if (error) throw error;
-      return NextResponse.json({ success: true, market: data });
+      const market = await prisma.markets.update({
+        where: { id },
+        data: updateData,
+      });
+
+      return NextResponse.json({ success: true, market });
     }
 
     if (action === "daily_reset") {
       // Reset winning number and reactivate market
-      const { data, error } = await supabase
-        .from("markets")
-        .update({ today_winning_number: null, is_active: true })
-        .eq("id", id)
-        .select()
-        .single();
+      const market = await prisma.markets.update({
+        where: { id },
+        data: { today_winning_number: null, is_active: true },
+      });
 
-      if (error) throw error;
-      return NextResponse.json({ success: true, market: data });
+      return NextResponse.json({ success: true, market });
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });

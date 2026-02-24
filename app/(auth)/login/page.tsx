@@ -30,7 +30,15 @@ export default function LoginPage() {
 
     setIsLoading(true);
 
-    // Using dummy OTP sign in as requested for test projects
+    // MOCK OTP FOR ASSIGNMENT EVALUATION
+    // If the user enters the test number, we pretend we sent an OTP to bypass SMS limits
+    if (phoneNumber === "+910000000000") {
+      setIsLoading(false);
+      setStep("otp");
+      toast.success("Test OTP triggered. Use 123456 to login.");
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithOtp({
       phone: phoneNumber,
     });
@@ -50,15 +58,26 @@ export default function LoginPage() {
     if (!otp) return toast.error("Please enter the OTP");
 
     setIsLoading(true);
+
+    // MOCK OTP AWARENESS
+    if (phoneNumber === "+910000000000" && otp === "123456") {
+      // For the mock login to actually grant a session, we still rely on Supabase's
+      // Test OTP feature being enabled in the dashboard. If it's not enabled,
+      // this will fail. We'll proceed with the normal verify call which will
+      // succeed if the dashboard is configured with "123456" as the test OTP.
+      toast.info("Attempting test login...");
+    }
+
     const { error, data } = await supabase.auth.verifyOtp({
       phone: phoneNumber,
       token: otp,
       type: "sms",
     });
+
     setIsLoading(false);
 
     if (error) {
-      toast.error(error.message);
+      toast.error(error.message + " (Ensure Test OTP is enabled in Supabase)");
     } else {
       toast.success("Logged in successfully");
       router.push("/");
