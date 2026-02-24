@@ -290,13 +290,13 @@ export default function LoginPage() {
           <p className="text-[11px]" style={{ color: "var(--mykd-text-dim)" }}>
             User: +910000000002 / OTP: 123456
           </p>
-          <a
+          {/* <a
             href="/admin/login"
             className="inline-block text-xs font-semibold uppercase tracking-wider transition-colors"
             style={{ color: "var(--mykd-text-dim)" }}
           >
             Admin Login →
-          </a>
+          </a> */}
         </div>
       </div>
     </div>

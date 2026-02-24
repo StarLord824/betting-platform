@@ -10,14 +10,17 @@ export const revalidate = 0;
 function isMarketOpen(openTime: string, closeTime: string, isActive: boolean) {
   if (!isActive) return false;
 
+  // Convert current UTC time to IST (UTC+5:30)
   const now = new Date();
-  const currentTime = now.getHours() * 100 + now.getMinutes();
+  const istOffset = 330; // 5.5 hours in minutes
+  const utcMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+  const currentTime = (utcMinutes + istOffset) % (24 * 60);
 
   const openTimeStr = openTime.split(":");
   const closeTimeStr = closeTime.split(":");
 
-  const openVal = parseInt(openTimeStr[0]) * 100 + parseInt(openTimeStr[1]);
-  const closeVal = parseInt(closeTimeStr[0]) * 100 + parseInt(closeTimeStr[1]);
+  const openVal = parseInt(openTimeStr[0]) * 60 + parseInt(openTimeStr[1]);
+  const closeVal = parseInt(closeTimeStr[0]) * 60 + parseInt(closeTimeStr[1]);
 
   return currentTime >= openVal && currentTime < closeVal;
 }
