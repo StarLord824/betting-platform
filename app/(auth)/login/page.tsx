@@ -280,9 +280,15 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-6 space-y-2">
-          <p className="text-xs" style={{ color: "var(--mykd-text-dim)" }}>
-            Test: +910000000000 / OTP: 123456
+        <div className="text-center mt-6 space-y-1">
+          <p className="text-[11px]" style={{ color: "var(--mykd-text-dim)" }}>
+            Admin: +910000000000 / OTP: 123456
+          </p>
+          <p className="text-[11px]" style={{ color: "var(--mykd-text-dim)" }}>
+            User: +910000000001 / OTP: 123456
+          </p>
+          <p className="text-[11px]" style={{ color: "var(--mykd-text-dim)" }}>
+            User: +910000000002 / OTP: 123456
           </p>
           <a
             href="/admin/login"

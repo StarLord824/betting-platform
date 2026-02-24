@@ -41,13 +41,19 @@ export async function POST(request: Request) {
           throw new Error("Market is closed for betting");
         }
 
-        // Server-side time validation: ensure current time is within market hours
+        // Server-side time validation: ensure current IST time is within market hours
+        // Markets operate in IST (UTC+5:30), so convert server time to IST
         const now = new Date();
-        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+        const istOffset = 5.5 * 60; // IST is UTC+5:30 = 330 minutes
+        const utcMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+        const currentMinutes = (utcMinutes + istOffset) % (24 * 60);
+
         const openTime = market.open_time;
         const closeTime = market.close_time;
-        const openMinutes = openTime.getHours() * 60 + openTime.getMinutes();
-        const closeMinutes = closeTime.getHours() * 60 + closeTime.getMinutes();
+        const openMinutes =
+          openTime.getUTCHours() * 60 + openTime.getUTCMinutes();
+        const closeMinutes =
+          closeTime.getUTCHours() * 60 + closeTime.getUTCMinutes();
 
         if (currentMinutes < openMinutes || currentMinutes >= closeMinutes) {
           throw new Error("Market is outside of operating hours");

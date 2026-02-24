@@ -25,7 +25,9 @@ export default async function UserLayout({
     select: { balance: true, role: true },
   });
 
-  // Admins can also view the user dashboard (no redirect)
+  if (profile?.role === "admin") {
+    redirect("/admin");
+  }
 
   return (
     <div
