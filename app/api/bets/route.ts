@@ -41,6 +41,18 @@ export async function POST(request: Request) {
           throw new Error("Market is closed for betting");
         }
 
+        // Server-side time validation: ensure current time is within market hours
+        const now = new Date();
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+        const openTime = market.open_time;
+        const closeTime = market.close_time;
+        const openMinutes = openTime.getHours() * 60 + openTime.getMinutes();
+        const closeMinutes = closeTime.getHours() * 60 + closeTime.getMinutes();
+
+        if (currentMinutes < openMinutes || currentMinutes >= closeMinutes) {
+          throw new Error("Market is outside of operating hours");
+        }
+
         const profile = await tx.profiles.update({
           where: { id: user.id },
           data: {
@@ -80,7 +92,8 @@ export async function POST(request: Request) {
 
       if (
         error.message.includes("Insufficient wallet balance") ||
-        error.message.includes("Market is closed for betting")
+        error.message.includes("Market is closed for betting") ||
+        error.message.includes("Market is outside of operating hours")
       ) {
         return NextResponse.json({ error: error.message }, { status: 400 });
       }

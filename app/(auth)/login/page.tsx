@@ -54,7 +54,26 @@ export default function LoginPage() {
       toast.error(error.message);
     } else {
       toast.success("Logged in successfully!");
-      router.push("/");
+
+      // Check if user is admin and redirect accordingly
+      const {
+        data: { user: loggedInUser },
+      } = await supabase.auth.getUser();
+      if (loggedInUser) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", loggedInUser.id)
+          .single();
+
+        if (profile?.role === "admin") {
+          router.push("/admin");
+        } else {
+          router.push("/dashboard");
+        }
+      } else {
+        router.push("/dashboard");
+      }
       router.refresh();
     }
   };
@@ -260,13 +279,19 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Footer hint */}
-        <p
-          className="text-center mt-6 text-xs"
-          style={{ color: "var(--mykd-text-dim)" }}
-        >
-          Test: +910000000000 / OTP: 123456
-        </p>
+        {/* Footer */}
+        <div className="text-center mt-6 space-y-2">
+          <p className="text-xs" style={{ color: "var(--mykd-text-dim)" }}>
+            Test: +910000000000 / OTP: 123456
+          </p>
+          <a
+            href="/admin/login"
+            className="inline-block text-xs font-semibold uppercase tracking-wider transition-colors"
+            style={{ color: "var(--mykd-text-dim)" }}
+          >
+            Admin Login →
+          </a>
+        </div>
       </div>
     </div>
   );

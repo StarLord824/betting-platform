@@ -1,13 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Trophy, RotateCcw, Loader2 } from "lucide-react";
+import { Trophy, RotateCcw, Loader2, Power } from "lucide-react";
 
 interface Market {
   id: string;
@@ -68,7 +64,7 @@ export function MarketControls({
     });
 
     if (result) {
-      toast.success("Market status updated");
+      toast.success(`Market ${newStatus ? "opened" : "closed"}`);
       router.refresh();
     } else {
       setMarkets(
@@ -126,49 +122,78 @@ export function MarketControls({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {markets.map((market) => (
         <div
           key={market.id}
-          className="p-4 bg-neutral-950 border border-neutral-800 rounded-xl space-y-4"
+          className="clip-notch-sm p-4 space-y-3"
+          style={{
+            backgroundColor: "var(--mykd-surface-2)",
+            border: `1px solid ${market.is_active ? "rgba(139, 92, 246, 0.3)" : "var(--mykd-border)"}`,
+          }}
         >
           {/* Header row */}
           <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <Label className="text-base font-semibold text-white">
+            <div>
+              <h3
+                className="text-sm font-bold text-white tracking-wider"
+                style={{
+                  fontFamily: "'Barlow', sans-serif",
+                  textTransform: "uppercase",
+                }}
+              >
                 {market.name}
-              </Label>
-              <p className="text-sm text-neutral-400">
+              </h3>
+              <p
+                className="text-xs mt-0.5"
+                style={{ color: "var(--mykd-text-dim)" }}
+              >
                 {market.open_time.substring(0, 5)} –{" "}
                 {market.close_time.substring(0, 5)}
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <span
-                className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                  market.is_active
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : "bg-neutral-800 text-neutral-400"
-                }`}
+                className="text-[10px] font-bold px-2 py-0.5 clip-notch-sm uppercase tracking-wider"
+                style={{
+                  backgroundColor: market.is_active
+                    ? "rgba(69, 248, 130, 0.15)"
+                    : "rgba(107, 114, 128, 0.15)",
+                  color: market.is_active ? "#45F882" : "var(--mykd-text-dim)",
+                  fontFamily: "'Barlow', sans-serif",
+                }}
               >
                 {market.is_active ? "OPEN" : "CLOSED"}
               </span>
-              <Switch
-                checked={market.is_active}
-                onCheckedChange={() =>
-                  handleToggle(market.id, market.is_active)
-                }
+              <button
+                onClick={() => handleToggle(market.id, market.is_active)}
                 disabled={isLoading === market.id}
-              />
+                className="w-8 h-8 flex items-center justify-center clip-notch-sm transition-colors"
+                style={{
+                  backgroundColor: market.is_active
+                    ? "rgba(69, 248, 130, 0.15)"
+                    : "var(--mykd-surface)",
+                  border: `1px solid ${market.is_active ? "rgba(69, 248, 130, 0.3)" : "var(--mykd-border)"}`,
+                  color: market.is_active ? "#45F882" : "var(--mykd-text-dim)",
+                }}
+              >
+                <Power className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
 
           {/* Winning number status */}
           {market.today_winning_number && (
-            <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 px-3 py-2 rounded-lg">
-              <Trophy className="w-4 h-4 text-amber-400" />
-              <span className="text-sm text-amber-400">
-                Today&apos;s Result:{" "}
+            <div
+              className="flex items-center gap-2 px-3 py-2 clip-notch-sm"
+              style={{
+                backgroundColor: "rgba(255, 184, 0, 0.1)",
+                border: "1px solid rgba(255, 184, 0, 0.2)",
+              }}
+            >
+              <Trophy className="w-3.5 h-3.5" style={{ color: "#FFB800" }} />
+              <span className="text-xs" style={{ color: "#FFB800" }}>
+                Result:{" "}
                 <span className="font-bold tracking-widest">
                   {market.today_winning_number}
                 </span>
@@ -179,8 +204,8 @@ export function MarketControls({
           {/* Result Declaration */}
           {!market.today_winning_number && (
             <div className="flex gap-2">
-              <Input
-                placeholder="Winning number"
+              <input
+                placeholder="Winning #"
                 value={winningNumbers[market.id] || ""}
                 onChange={(e) =>
                   setWinningNumbers((prev) => ({
@@ -188,43 +213,56 @@ export function MarketControls({
                     [market.id]: e.target.value.replace(/\D/g, ""),
                   }))
                 }
-                className="bg-neutral-900 border-neutral-700 text-white flex-1"
+                className="flex-1 px-3 py-2 text-sm text-white placeholder:text-gray-600 outline-none clip-notch-sm"
+                style={{
+                  backgroundColor: "var(--mykd-surface)",
+                  border: "1px solid var(--mykd-border)",
+                }}
                 disabled={isLoading === market.id}
               />
-              <Button
+              <button
                 onClick={() => handleDeclareResult(market.id)}
                 disabled={isLoading === market.id || !winningNumbers[market.id]}
-                size="sm"
-                className="bg-amber-600 hover:bg-amber-500 text-white"
+                className="px-3 py-2 text-xs font-bold uppercase tracking-wider clip-notch-sm disabled:opacity-50 flex items-center gap-1"
+                style={{
+                  backgroundColor: "rgba(255, 184, 0, 0.15)",
+                  border: "1px solid rgba(255, 184, 0, 0.3)",
+                  color: "#FFB800",
+                  fontFamily: "'Barlow', sans-serif",
+                }}
               >
                 {isLoading === market.id ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3 w-3 animate-spin" />
                 ) : (
                   <>
-                    <Trophy className="h-4 w-4 mr-1" />
+                    <Trophy className="h-3 w-3" />
                     Declare
                   </>
                 )}
-              </Button>
+              </button>
             </div>
           )}
 
           {/* Daily Reset */}
           {market.today_winning_number && (
-            <Button
+            <button
               onClick={() => handleDailyReset(market.id)}
               disabled={isLoading === market.id}
-              variant="outline"
-              size="sm"
-              className="w-full border-neutral-700 text-neutral-300 hover:text-white"
+              className="w-full py-2 text-xs font-bold uppercase tracking-wider clip-notch-sm disabled:opacity-50 flex items-center justify-center gap-1.5 transition-colors"
+              style={{
+                backgroundColor: "transparent",
+                border: "1px solid var(--mykd-border)",
+                color: "var(--mykd-text-muted)",
+                fontFamily: "'Barlow', sans-serif",
+              }}
             >
               {isLoading === market.id ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="h-3 w-3 animate-spin" />
               ) : (
-                <RotateCcw className="h-4 w-4 mr-2" />
+                <RotateCcw className="h-3 w-3" />
               )}
               Reset for New Day
-            </Button>
+            </button>
           )}
         </div>
       ))}

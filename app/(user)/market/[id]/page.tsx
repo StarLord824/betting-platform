@@ -25,12 +25,13 @@ function isMarketOpen(openTime: string, closeTime: string, isActive: boolean) {
 export default async function MarketPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const supabase = await createClient();
 
   const marketRaw = await prisma.markets.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!marketRaw) {
