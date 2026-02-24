@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { sortPanna, validateGameInput } from "@/lib/game-logic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +54,7 @@ export function BettingForm({
   marketName,
   onSuccess,
 }: BettingFormProps) {
+  const router = useRouter();
   const [gameType, setGameType] = useState<string>("single_digit");
   const [number, setNumber] = useState("");
   const [amount, setAmount] = useState("");
@@ -108,9 +110,21 @@ export function BettingForm({
       setNumber("");
       setAmount("");
 
-      if (onSuccess && data.new_balance !== undefined) {
-        onSuccess(data.new_balance);
+      // Trigger wallet animation
+      if (
+        typeof window !== "undefined" &&
+        (window as any).__updateWalletBalance &&
+        data.bet?.new_balance !== undefined
+      ) {
+        (window as any).__updateWalletBalance(data.bet.new_balance);
       }
+
+      if (onSuccess && data.bet?.new_balance !== undefined) {
+        onSuccess(data.bet.new_balance);
+      }
+
+      // Refresh server components to get updated balance
+      router.refresh();
     } catch (error: any) {
       toast.error(error.message);
     } finally {
